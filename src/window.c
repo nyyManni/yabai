@@ -354,12 +354,21 @@ bool window_is_standard(struct window *window)
     bool standard_win = false;
     CFStringRef role  = NULL;
     CFStringRef srole = NULL;
+    char *title = NULL;
 
     if (!(role  = window_role(window)))    goto out;
     if (!(srole = window_subrole(window))) goto role;
 
     standard_win = CFEqual(role, kAXWindowRole) &&
                    CFEqual(srole, kAXStandardWindowSubrole);
+
+    /* Special case for Emacs... */
+    if (!standard_win && (CFEqual(srole, kAXStandardWindowSubrole))) {
+      title = window_title(window);
+      standard_win = strncmp(title, "Emacs v", 6) == 0;
+    }
+
+    if (title) free(title);
 
     CFRelease(srole);
 role:
